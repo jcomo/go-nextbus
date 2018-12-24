@@ -2,10 +2,35 @@ package nextbus
 
 import (
 	"encoding/xml"
+	"errors"
+	"strings"
 )
 
+type response interface {
+	responseError() error
+}
+
+type Response struct {
+	XMLName xml.Name        `xml:"body"`
+	Error   *Response_Error `xml:"Error"`
+}
+
+type Response_Error struct {
+	ShouldRetry bool   `xml:"shouldRetry,attr"`
+	Message     string `xml:",chardata"`
+}
+
+func (r *Response) responseError() error {
+	if r.Error != nil {
+		msg := strings.Trim(r.Error.Message, "\n ")
+		return errors.New(msg)
+	}
+
+	return nil
+}
+
 type AgencyListResponse struct {
-	XMLName  xml.Name                    `xml:"body"`
+	Response
 	Agencies []AgencyListResponse_Agency `xml:"agency"`
 }
 
@@ -16,8 +41,8 @@ type AgencyListResponse_Agency struct {
 }
 
 type RouteListResponse struct {
-	XMLName xml.Name                  `xml:"body"`
-	Routes  []RouteListResponse_Route `xml:"route"`
+	Response
+	Routes []RouteListResponse_Route `xml:"route"`
 }
 
 type RouteListResponse_Route struct {
@@ -26,8 +51,8 @@ type RouteListResponse_Route struct {
 }
 
 type RouteConfigResponse struct {
-	XMLName xml.Name                  `xml:"body"`
-	Route   RouteConfigResponse_Route `xml:"route"`
+	Response
+	Route RouteConfigResponse_Route `xml:"route"`
 }
 
 type RouteConfigResponse_Route struct {
@@ -74,6 +99,7 @@ type RouteConfigResponse_StopTag struct {
 }
 
 type PredictionsResponse struct {
+	Response
 	Prediction PredictionsResponse_Predictions `xml:"predictions"`
 }
 
@@ -111,12 +137,15 @@ type PredictionsResponse_Prediction struct {
 
 type ScheduleResponse struct {
 	// TODO: not implemented
+	Response
 }
 
 type MessagesResponse struct {
 	// TODO: not implemented
+	Response
 }
 
 type VehicleLocationsResponse struct {
 	// TODO: not implemented
+	Response
 }

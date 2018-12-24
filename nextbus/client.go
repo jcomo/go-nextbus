@@ -77,13 +77,12 @@ func (c *Client) VehicleLocations(agency, routeTag string, lastUpdatedMs uint64)
 	return nil, errNotImplemented
 }
 
-func (c *Client) command(name string, r interface{}, params map[string]string) error {
+func (c *Client) command(name string, r response, params map[string]string) error {
 	req, err := http.NewRequest("GET", c.URL, nil)
 	if err != nil {
 		return err
 	}
 
-	// TODO: handle errors in response body
 	query := url.Values{}
 	query.Add("command", name)
 	for k, v := range params {
@@ -99,6 +98,11 @@ func (c *Client) command(name string, r interface{}, params map[string]string) e
 	}
 
 	err = xml.NewDecoder(resp.Body).Decode(&r)
+	if err != nil {
+		return err
+	}
+
+	err = r.responseError()
 	if err != nil {
 		return err
 	}
